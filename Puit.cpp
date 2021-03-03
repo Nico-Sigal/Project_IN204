@@ -54,10 +54,12 @@ void Puit::OnPaint(wxPaintEvent& event) {
 	wxPaintDC dc(this);
 	wxSize size = GetClientSize();
 	int hautPuit = size.GetHeight() - Hauteur * HauteurCube();
+	int idpiece;
 
 	for (int i = 0; i < Hauteur; i++) {
 		for (int j = 0; j < Largeur; j++) {
 			pieces forme = FormeA(j, Hauteur - i - 1);
+			idpiece = int(forme);
 			if (forme != PasDeForme) {
 				DrawCube(dc, j * LargeurCube(), hautPuit + i * HauteurCube(), forme,true);
 			}
@@ -69,7 +71,8 @@ void Puit::OnPaint(wxPaintEvent& event) {
 		for (int i = 0; i < 4; i++) {
 			int x = posX + pieceActuelle.x(i);
 			int y = posY + pieceActuelle.y(i);
-			DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), pieceActuelle.getForme(),true);
+			idpiece = int(pieceActuelle.getForme());
+			DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), idpiece,true);
 		}
 		PrevisualisationCube(dc, hautPuit);
 	}
@@ -260,28 +263,26 @@ void Puit::GainScore(int nblignes) {
 	}
 }
 
-void Puit::DrawCube(wxPaintDC& dc, int x, int y, pieces forme,bool plein) {
-	const wxColour reflet[] = {wxColour(0,0,0),wxColour(0,255,255),wxColour(255,255,0),wxColour(255,255,102),wxColour(255,102,255),wxColour(102,102,255),wxColour(255,255,102) };
-	const wxColour couleur[] = { wxColour(0,0,0),wxColour(0,200,200),wxColour(200,200,0),wxColour(200,200,61),wxColour(200,61,200),wxColour(61,61,200),wxColour(200,200,61) };
-	const wxColour ombre[] = { wxColour(0,0,0),wxColour(0,128,128),wxColour(128,128,0),wxColour(128,128,30),wxColour(128,30,128),wxColour(30,30,128),wxColour(128,128,30) };
+void Puit::DrawCube(wxPaintDC& dc, int x, int y, int idpiece,bool plein) {
+	const wxColour reflet[] = {wxColour(0,0,0),wxColour(255,0,255),wxColour(0,255,255),wxColour(255,255,0),wxColour(255,255,102),wxColour(255,102,255),wxColour(102,102,255),wxColour(255,255,102) };
+	const wxColour couleur[] = { wxColour(0,0,0),wxColour(200,0,200),wxColour(0,200,200),wxColour(200,200,0),wxColour(200,200,61),wxColour(200,61,200),wxColour(61,61,200),wxColour(200,200,61) };
+	const wxColour ombre[] = { wxColour(0,0,0),wxColour(128,0,128),wxColour(0,128,128),wxColour(128,128,0),wxColour(128,128,30),wxColour(128,30,128),wxColour(30,30,128),wxColour(128,128,30) };
 
-	int value;
-	value = int(forme);
-	wxPen pinceau(reflet[value]);
+	wxPen pinceau(reflet[idpiece]);
 	pinceau.SetCap(wxCAP_PROJECTING);
 	dc.SetPen(pinceau);
 
 	dc.DrawLine(x, y + HauteurCube() - 1, x, y);
 	dc.DrawLine(x, y, x+ LargeurCube()-1, y);
 
-	wxPen pinceauOmbre(ombre[value]);
+	wxPen pinceauOmbre(ombre[idpiece]);
 	pinceauOmbre.SetCap(wxCAP_PROJECTING);
 	dc.SetPen(pinceauOmbre);
 	dc.DrawLine(x+1, y + HauteurCube() - 1, x+LargeurCube()-1, y+ HauteurCube() - 1);
 	dc.DrawLine(x + LargeurCube() - 1, y + HauteurCube()-1, x + LargeurCube() - 1, y+1);
 	if (plein) {
 		dc.SetPen(*wxTRANSPARENT_PEN);
-		dc.SetBrush(wxBrush(couleur[value]));
+		dc.SetBrush(wxBrush(couleur[idpiece]));
 		dc.DrawRectangle(x + 1, y + 1, LargeurCube() - 2, HauteurCube() - 2);
 	}
 }
