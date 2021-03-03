@@ -24,7 +24,7 @@ private:
 	int HauteurCube() { return GetClientSize().GetHeight() / Hauteur; }
 	void EffacerPuit();
 	void NouveauBloc();
-	void DrawCube(wxPaintDC &dc, int x, int y, pieces forme,bool plein);
+	void DrawCube(wxPaintDC &dc, int x, int y, int idpiece,bool plein);
 	void PrevisualisationCube(wxPaintDC &dc,int hautPuit);
 	void TombeCube();
 	bool TenteBouger(const Bloc& nouvellePiece, int nouveauX, int nouveauY);
