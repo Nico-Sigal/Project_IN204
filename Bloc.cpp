@@ -5,6 +5,7 @@
 void Bloc::BlocInit(pieces forme)
 {
 	static const int Tablecoords[8][4][2] = {
+		// Ordre des couleurs PasDeForme, FormeI, FormeO, FormeT, FormeL, FormeJ, FormeZ, FormeS
 		{{0,0}, {0,0}, {0,0}, {0,0}},
 		{{-1,0}, {0,0}, {1,0}, {2,0}},
 		{{0,0}, {0,1}, {1,0}, {1,1}},

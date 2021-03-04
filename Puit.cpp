@@ -1,6 +1,6 @@
 #include "Puit.h"
 
-Puit::Puit(wxFrame *parent) :wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+Puit::Puit(wxFrame *parent) :wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_DEFAULT)
 {
 	timer = new wxTimer(this, 1);
 
@@ -11,6 +11,12 @@ Puit::Puit(wxFrame *parent) :wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefa
 	posX = 0;
 	posY = 0;
 	EffacerPuit();
+	wxInitAllImageHandlers();
+	SetBackgroundColour(wxColor(0,0,0));
+	wxBitmap bitmap(GetClientSize().GetHeight() * 10. / 22., GetClientSize().GetHeight());
+	static wxImage image = bitmap.ConvertToImage();
+	image.LoadFile("fond.png", wxBITMAP_TYPE_PNG);
+	fond = wxBitmap(image);
 	Connect(wxEVT_PAINT, wxPaintEventHandler(Puit::OnPaint));
 	Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(Puit::OnKeyDown));
 	Connect(wxEVT_TIMER, wxCommandEventHandler(Puit::OnTimer));
@@ -27,7 +33,7 @@ void Puit::Start()
 
 	NouveauBloc();
 	wxString str;
-	str.Printf(wxT("%d"), pieceActuelle.getForme());
+	str.Printf(wxT("%d"), bourse);
 	m_stsbar->SetStatusText(str);
 	timer->Start(300);
 }
@@ -55,6 +61,7 @@ void Puit::OnPaint(wxPaintEvent& event) {
 	wxSize size = GetClientSize();
 	int hautPuit = size.GetHeight() - Hauteur * HauteurCube();
 	int idpiece;
+	DrawGrille(dc, 0, 0);
 
 	for (int i = 0; i < Hauteur; i++) {
 		for (int j = 0; j < Largeur; j++) {
@@ -75,6 +82,9 @@ void Puit::OnPaint(wxPaintEvent& event) {
 			DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), idpiece,true);
 		}
 		PrevisualisationCube(dc, hautPuit);
+	}
+	if (!EnJeu) {
+
 	}
 }
 
@@ -106,6 +116,12 @@ void Puit::OnKeyDown(wxKeyEvent& event) {
 		break;
 	case WXK_SPACE:
 		TombeCube();
+		break;
+	case 's':
+		TombeUneLigne();
+		break;
+	case 'S':
+		TombeUneLigne();
 		break;
 	default:
 		event.Skip();
@@ -141,8 +157,7 @@ void Puit::PrevisualisationCube(wxPaintDC &dc, int hautPuit){
 		int y = nY + pieceActuelle.y(i);
 		DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), pieceActuelle.getForme(), false);
 		wxString str;
-		str.Printf(wxT("%d "), x);
-		str.Printf(wxT("%d"), y);
+		str.Printf(wxT("%d "), bourse);
 		m_stsbar->SetStatusText(str);
 	}
 }
@@ -214,6 +229,7 @@ void Puit::NouveauBloc() {
 		pieceActuelle.BlocInit(PasDeForme);
 		timer->Stop();
 		EnJeu = false;
+
 		m_stsbar->SetStatusText(wxT("Game Over"));
 	}
 }
@@ -264,8 +280,9 @@ void Puit::GainScore(int nblignes) {
 }
 
 void Puit::DrawCube(wxPaintDC& dc, int x, int y, int idpiece,bool plein) {
+	// Ordre des couleurs PasDeForme, FormeI, FormeO, FormeT, FormeL, FormeJ, FormeZ, FormeS
 	const wxColour reflet[] = {wxColour(0,0,0),wxColour(255,0,255),wxColour(0,255,255),wxColour(255,255,0),wxColour(255,255,102),wxColour(255,102,255),wxColour(102,102,255),wxColour(255,255,102) };
-	const wxColour couleur[] = { wxColour(0,0,0),wxColour(200,0,200),wxColour(0,200,200),wxColour(200,200,0),wxColour(200,200,61),wxColour(200,61,200),wxColour(61,61,200),wxColour(200,200,61) };
+	const wxColour couleur[] = { wxColour(0,0,0),wxColour(169,255,547),wxColour(244,238,210),wxColour(252,255,221),wxColour(255,209,227),wxColour(105,221,255),wxColour(255,167,171),wxColour(167,255,175) };
 	const wxColour ombre[] = { wxColour(0,0,0),wxColour(128,0,128),wxColour(0,128,128),wxColour(128,128,0),wxColour(128,128,30),wxColour(128,30,128),wxColour(30,30,128),wxColour(128,128,30) };
 
 	wxPen pinceau(reflet[idpiece]);
@@ -284,5 +301,17 @@ void Puit::DrawCube(wxPaintDC& dc, int x, int y, int idpiece,bool plein) {
 		dc.SetPen(*wxTRANSPARENT_PEN);
 		dc.SetBrush(wxBrush(couleur[idpiece]));
 		dc.DrawRectangle(x + 1, y + 1, LargeurCube() - 2, HauteurCube() - 2);
+	}
+}
+
+void Puit::DrawGrille(wxPaintDC& dc, int x, int y) {
+	wxPen pinceau(wxColor(3,194,212));
+	pinceau.SetCap(wxCAP_PROJECTING);
+	dc.SetPen(pinceau);
+	for (int i = 1; i < Hauteur; i++) {
+		dc.DrawLine(x, y +i* HauteurCube()+2, x + LargeurCube()*Largeur, y + i * HauteurCube()+2);
+	}
+	for (int i = 1; i < Largeur; i++) {
+		dc.DrawLine(x+i* LargeurCube(), y, x + i * LargeurCube(), y + Hauteur * HauteurCube());
 	}
 }

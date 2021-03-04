@@ -2,13 +2,14 @@
 #include "Bloc.h"
 #include "wx/wx.h"
 
+
+
 class Puit : public wxPanel
 {
 public:
 	Puit(wxFrame *parent);
 	void Start();
 	void Pause();
-	void GainScore(int nblignes);
 
 	
 protected:
@@ -20,11 +21,12 @@ protected:
 private:
 	enum { Largeur = 10, Hauteur = 22 };
 	pieces & FormeA(int x, int y) { return matrice[y*Largeur + x]; }
-	int LargeurCube() { return GetClientSize().GetWidth() / Largeur; }
+	int LargeurCube() { return GetClientSize().GetHeight() / Hauteur; }
 	int HauteurCube() { return GetClientSize().GetHeight() / Hauteur; }
 	void EffacerPuit();
 	void NouveauBloc();
 	void DrawCube(wxPaintDC &dc, int x, int y, int idpiece,bool plein);
+	void DrawGrille(wxPaintDC &dc, int x, int y);
 	void PrevisualisationCube(wxPaintDC &dc,int hautPuit);
 	void TombeCube();
 	bool TenteBouger(const Bloc& nouvellePiece, int nouveauX, int nouveauY);
@@ -32,8 +34,10 @@ private:
 	void TombeUneLigne();
 	void PlacerPiece();
 	void EffacerLignesPleines();
+	void GainScore(int nblignes);
 
 	wxTimer *timer;
+	wxBitmap fond;
 	bool EnJeu;
 	bool EnPause;
 	bool NeTombePlus;
