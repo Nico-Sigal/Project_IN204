@@ -9,6 +9,7 @@ public:
 
 	void ClicSurBouton(wxCommandEvent &evt);
 	void OnEraseBackGround(wxEraseEvent& event);
+	void LancerPartie(wxCommandEvent &evt);
 
 	wxDECLARE_EVENT_TABLE();
 

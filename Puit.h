@@ -10,6 +10,7 @@ public:
 	Puit(wxFrame *parent);
 	void Start();
 	void Pause();
+	enum { Largeur = 10, Hauteur = 22 };
 
 	
 protected:
@@ -19,7 +20,6 @@ protected:
 
 
 private:
-	enum { Largeur = 10, Hauteur = 22 };
 	pieces & FormeA(int x, int y) { return matrice[y*Largeur + x]; }
 	int LargeurCube() { return GetClientSize().GetHeight() / Hauteur; }
 	int HauteurCube() { return GetClientSize().GetHeight() / Hauteur; }
