@@ -1,4 +1,5 @@
 #include "Puit.h"
+#include "p2psocket.h"
 
 Puit::Puit(wxFrame *parent) :wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_DEFAULT)
 {
@@ -57,6 +58,7 @@ void Puit::Pause()
 }
 
 void Puit::OnPaint(wxPaintEvent& event) {
+
 	wxPaintDC dc(this);
 	wxSize size = GetClientSize();
 	int hautPuit = size.GetHeight() - Hauteur * HauteurCube();
@@ -68,7 +70,7 @@ void Puit::OnPaint(wxPaintEvent& event) {
 			pieces forme = FormeA(j, Hauteur - i - 1);
 			idpiece = int(forme);
 			if (forme != PasDeForme) {
-				DrawCube(dc, j * LargeurCube(), hautPuit + i * HauteurCube(), forme,true);
+				DrawCube(dc, j * LargeurCube(), hautPuit + i * HauteurCube(), forme,true,false);
 			}
 				
 		}
@@ -79,10 +81,26 @@ void Puit::OnPaint(wxPaintEvent& event) {
 			int x = posX + pieceActuelle.x(i);
 			int y = posY + pieceActuelle.y(i);
 			idpiece = int(pieceActuelle.getForme());
-			DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), idpiece,true);
+			DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), idpiece,true,false);
 		}
 		PrevisualisationCube(dc, hautPuit);
 	}
+	int XGrid;
+	int YGrid= GetClientSize().GetHeight()/2. - TailleMiniCube()*Hauteur/2;
+	mysocket* grandparent = wxDynamicCast(this->GetGrandParent(), mysocket);
+	for (unsigned int u = 0; u < grandparent->nbEnnemis;u++) {
+		XGrid = (Largeur + 1)*HauteurCube() + Largeur * u*TailleMiniCube();
+		for (int i = 0; i < Hauteur; i++) {
+			for (int j = 0; j < Largeur; j++) {
+				pieces forme = grandparent->listeJoueurs[u].getMatrice()[(Hauteur - i - 1)*Largeur + j];
+				if (forme != PasDeForme) {
+					DrawCube(dc, XGrid + j * LargeurCube(), YGrid + hautPuit + i * HauteurCube(), forme, true,true);
+				}
+
+			}
+		}
+	}
+
 	if (!EnJeu) {
 
 	}
@@ -155,7 +173,7 @@ void Puit::PrevisualisationCube(wxPaintDC &dc, int hautPuit){
 	for (int i = 0; i < 4; i++) {
 		int x = posX + pieceActuelle.x(i);
 		int y = nY + pieceActuelle.y(i);
-		DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), pieceActuelle.getForme(), false);
+		DrawCube(dc, x*LargeurCube(), hautPuit + (Hauteur - y - 1)*HauteurCube(), pieceActuelle.getForme(), false,false);
 		wxString str;
 		str.Printf(wxT("%d "), bourse);
 		m_stsbar->SetStatusText(str);
@@ -176,6 +194,8 @@ void Puit::PlacerPiece() {
 	}
 
 	EffacerLignesPleines();
+	mysocket* grandparent = wxDynamicCast(this->GetGrandParent(), mysocket);
+	grandparent->comGrille(getMatrice());
 
 	if (!NeTombePlus) {
 		NouveauBloc();
@@ -208,14 +228,14 @@ void Puit::EffacerLignesPleines(){
 				}
 			}
 		}
-		if (nombreLignesPleines > 0) {
-			//GainScore(nombreLignesPleines);
-			wxString str;
-			str.Printf(wxT("%d"), bourse);
+	}
+	if (nombreLignesPleines > 0) {
+		GainScore(nombreLignesPleines);
+		wxString str;
+		str.Printf(wxT("%d"), bourse);
 
-			NeTombePlus = true;
-			pieceActuelle.BlocInit(PasDeForme);
-		}
+		NeTombePlus = true;
+		pieceActuelle.BlocInit(PasDeForme);
 	}
 }
 
@@ -279,28 +299,34 @@ void Puit::GainScore(int nblignes) {
 	}
 }
 
-void Puit::DrawCube(wxPaintDC& dc, int x, int y, int idpiece,bool plein) {
+void Puit::DrawCube(wxPaintDC& dc, int x, int y, int idpiece,bool plein, bool mini) {
 	// Ordre des couleurs PasDeForme, FormeI, FormeO, FormeT, FormeL, FormeJ, FormeZ, FormeS
 	const wxColour reflet[] = {wxColour(0,0,0),wxColour(255,0,255),wxColour(0,255,255),wxColour(255,255,0),wxColour(255,255,102),wxColour(255,102,255),wxColour(102,102,255),wxColour(255,255,102) };
 	const wxColour couleur[] = { wxColour(0,0,0),wxColour(169,255,547),wxColour(244,238,210),wxColour(252,255,221),wxColour(255,209,227),wxColour(105,221,255),wxColour(255,167,171),wxColour(167,255,175) };
 	const wxColour ombre[] = { wxColour(0,0,0),wxColour(128,0,128),wxColour(0,128,128),wxColour(128,128,0),wxColour(128,128,30),wxColour(128,30,128),wxColour(30,30,128),wxColour(128,128,30) };
-
+	int H;
+	if (mini) {
+		H = TailleMiniCube();
+	}
+	else {
+		H = HauteurCube();
+	}
 	wxPen pinceau(reflet[idpiece]);
 	pinceau.SetCap(wxCAP_PROJECTING);
 	dc.SetPen(pinceau);
 
-	dc.DrawLine(x, y + HauteurCube() - 1, x, y);
-	dc.DrawLine(x, y, x+ LargeurCube()-1, y);
+	dc.DrawLine(x, y + H - 1, x, y);
+	dc.DrawLine(x, y, x+ H-1, y);
 
 	wxPen pinceauOmbre(ombre[idpiece]);
 	pinceauOmbre.SetCap(wxCAP_PROJECTING);
 	dc.SetPen(pinceauOmbre);
-	dc.DrawLine(x+1, y + HauteurCube() - 1, x+LargeurCube()-1, y+ HauteurCube() - 1);
-	dc.DrawLine(x + LargeurCube() - 1, y + HauteurCube()-1, x + LargeurCube() - 1, y+1);
+	dc.DrawLine(x+1, y + H - 1, x+H-1, y+ H - 1);
+	dc.DrawLine(x + H - 1, y + H-1, x + H - 1, y+1);
 	if (plein) {
 		dc.SetPen(*wxTRANSPARENT_PEN);
 		dc.SetBrush(wxBrush(couleur[idpiece]));
-		dc.DrawRectangle(x + 1, y + 1, LargeurCube() - 2, HauteurCube() - 2);
+		dc.DrawRectangle(x + 1, y + 1, H - 2, H - 2);
 	}
 }
 

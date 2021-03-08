@@ -2,10 +2,11 @@
 
 #include "p2psocket.h"
 
+
 mysocket :: mysocket (const wxString & title)
        : wxFrame(NULL, wxID_ANY, 
          title, 
-         wxDefaultPosition, wxSize(760, 600), 
+         wxDefaultPosition, wxSize(1500, 900), 
          wxDEFAULT_FRAME_STYLE)
 {
 
@@ -33,6 +34,7 @@ logtext->AppendText("\ntype on command line these commands:\n");
 logtext->AppendText("\ncommand: connect <IP address> and press enter to connect \n(example: connect 192.168.1.88 end press enter)\n");
 logtext->AppendText("\ncommand: chat <IP adress>: <message to send> and press enter to send message \n(example: chat 192.168.1.88: hello),press enter to send message\n");
 logtext->AppendText("\ncommand: disconnect <IP address> and press enter to disconnect \n(example: disconnect 192.168.1.88 and press enter)\n");
+logtext->AppendText("\ncommand: play and press enter to launch the game\n");
 
 wxStaticText * StaticTextCommand = new wxStaticText (this, wxID_STATIC,
 wxT ( "&Command:"),
@@ -50,19 +52,19 @@ wxTE_PROCESS_ENTER);
   Connect(wxID_EXIT, wxEVT_COMMAND_BUTTON_CLICKED, 
       wxCommandEventHandler(mysocket :: OnExit));
 
-wxSizer* sizertext = new wxBoxSizer(wxVERTICAL);
-    wxSizer* sizerserverclient = new wxBoxSizer(wxHORIZONTAL);
-        wxSizer* sizerserver = new wxBoxSizer(wxVERTICAL);
+sizertext = new wxBoxSizer(wxVERTICAL);
+    sizerserverclient = new wxBoxSizer(wxHORIZONTAL);
+        sizerserver = new wxBoxSizer(wxVERTICAL);
         sizerserver->Add(StaticTextServer, 0, wxALIGN_LEFT);
         sizerserver->Add(otherservers, 1, wxEXPAND);
-        wxSizer* sizerclient = new wxBoxSizer(wxVERTICAL);
+        sizerclient = new wxBoxSizer(wxVERTICAL);
         sizerclient->Add(StaticTextClient, 0, wxALIGN_LEFT);
         sizerclient->Add(otherclients, 1, wxEXPAND);
 sizerserverclient->Add(sizerserver, 1, wxEXPAND);
 sizerserverclient->Add(sizerclient, 1, wxEXPAND);
 sizertext->Add(sizerserverclient, 1, wxEXPAND);
 sizertext->Add(logtext, 1, wxEXPAND);
-    wxSizer* sizercommand = new wxBoxSizer(wxHORIZONTAL);
+    sizercommand = new wxBoxSizer(wxHORIZONTAL);
     sizercommand->Add(StaticTextCommand, 0, wxALIGN_LEFT);
     sizercommand->Add(commandtext, 1, wxEXPAND);
 sizertext->Add(sizercommand, 1, wxEXPAND);
@@ -101,6 +103,8 @@ if (m_option.Mid(0, 4) == "chat")
 chat(m_option.Mid(5, wxStrlen(m_option)));
 if (m_option.Mid(0, 10) == "disconnect")
 disconnect(m_option.Mid(11, wxStrlen(m_option)));
+if (m_option.Mid(0, 4) == "play")
+play();
 }
 
 void mysocket :: OnExit(wxCommandEvent & event)
@@ -200,7 +204,7 @@ void mysocket :: OnServerEvent(wxSocketEvent& event)
 //
 wxASSERT(event.GetSocketEvent() == wxSOCKET_CONNECTION); 
 // 
-// Get our server socket 
+// Get our server socket
 // 
 wxSocketServer* pServerSocket = (wxSocketServer*) event.GetSocket(); 
 // 
@@ -225,6 +229,7 @@ wxIPV4address addre;
 pSocket->GetPeer(addre);                         //get peer adress
 logtext->AppendText("\n-=connected to the client" + addre.IPAddress());
 clients_connected.Add(addre.IPAddress());
+listeJoueurs.push_back(JoueurEnnemi("ennemi "+listeJoueurs.size()+1,addre));
 otherclients->Set(clients_connected);
 pSocket->SetEventHandler(*((wxEvtHandler*)this), SERVERSOCKET_ID); 
 // 
@@ -386,6 +391,7 @@ for (int i = 0; i <= lastclient; i++)
   {
     m_socket_list_clients[i]->Close();
     m_socket_list_clients.erase(m_socket_list_clients.begin() + i);
+	listeJoueurs.erase(listeJoueurs.begin() + i);
     lastclient--;
     for (int x = i; x < lastclient; x++)
         m_socket_list_clients[x] = m_socket_list_clients[x + 1];
@@ -404,13 +410,35 @@ if (present == true)
 }
 }
 
+void mysocket::play() {
+	for (SocketList::iterator it = m_socket_list.begin(); it != m_socket_list.end(); ++it)
+	{
+		unsigned char c = PLAY_FLAG;
+		wxSocketBase *socket = *it;
+		// write the reply to the all connected clients
+		socket->Write(&c, 1);
+	}
+	EnJeu = true;
+	nbEnnemis = listeJoueurs.size();
+	srand(time(NULL));
+	Tetris *tetris = new Tetris(this,wxT("Tetris"));
+	tetris->Centre();
+	tetris->Show(true);
+}
+
 void mysocket::comGrille(pieces *matrice) {
 	wxString str;
-	for (int i = 0; i < Longueur*Largeur; i++) {
+	for (int i = 0; i < Hauteur*Largeur; i++) {
 		str += int(matrice[i]);
 		str += ",";
 	}
-	chat(str);
+	wxString msg;
+	wxString ip;
+	for (unsigned int i = 0; i < listeJoueurs.size(); i++) {
+		ip = listeJoueurs[i].getAdresse().IPAddress();
+		msg = ip + wxT(": ") + str;
+		chat(str);
+	}
 }
 
 
@@ -480,9 +508,40 @@ void mysocket :: chat(wxString text)
 	logtext->AppendText(msg1);
 }
 
-pieces mysocket::messageEnMatrice(wxString message) {
-		for
+pieces* mysocket::messageEnMatrice(wxString message) {
+	pieces nouvellematrice[Hauteur*Largeur];
+	int valeur;
+	for (int i = 0; i < Hauteur*Largeur; i++) {
+		valeur=int(message[2 * i]);
+		switch (valeur) {
+		case 0:
+			nouvellematrice[i] = PasDeForme;
+			break;
+		case 1:
+			nouvellematrice[i] = FormeI;
+			break;
+		case 2:
+			nouvellematrice[i] = FormeO;
+			break;
+		case 3:
+			nouvellematrice[i] = FormeT;
+			break;
+		case 4:
+			nouvellematrice[i] = FormeL;
+			break;
+		case 5:
+			nouvellematrice[i] = FormeJ;
+			break;
+		case 6:
+			nouvellematrice[i] = FormeZ;
+			break;
+		case 7:
+			nouvellematrice[i] = FormeS;
+			break;
+		}
 	}
+	return nouvellematrice;
+}
 
 	void mysocket :: OnClientSocketEvent(wxSocketEvent& event)
 	{
@@ -540,6 +599,14 @@ pieces mysocket::messageEnMatrice(wxString message) {
 					logtext->AppendText(message);
 					//display message  
 					break;
+				case PLAY_FLAG:
+					EnJeu = true;
+					nbEnnemis = listeJoueurs.size();
+					srand(time(NULL));
+					Tetris *tetris = new Tetris(this,wxT("Tetris"));
+					tetris->Centre();
+					tetris->Show(true);
+					break;
 				} // end switch control the data type
 			}
 			else {
@@ -552,6 +619,11 @@ pieces mysocket::messageEnMatrice(wxString message) {
 					sock->GetPeer(addre);                         //get peer adress
 					sock->ReadMsg(buf, MAX_MSG_SIZE);
 					message = wxString::FromUTF8(buf, sock->LastCount());
+					for (unsigned int i = 0; i < listeJoueurs.size(); i++) {
+						if (listeJoueurs[i].getAdresse() == addre) {
+							listeJoueurs[i].setMatrice(messageEnMatrice(message));
+						}
+					}
 					break;
 				}
 			}

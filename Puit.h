@@ -1,7 +1,7 @@
 #pragma once
 #include "Bloc.h"
 #include "wx/wx.h"
-
+#include <algorithm>
 
 
 class Puit : public wxPanel
@@ -23,9 +23,10 @@ private:
 	pieces & FormeA(int x, int y) { return matrice[y*Largeur + x]; }
 	int LargeurCube() { return GetClientSize().GetHeight() / Hauteur; }
 	int HauteurCube() { return GetClientSize().GetHeight() / Hauteur; }
+	int TailleMiniCube() { return std::min(double(GetClientSize().GetHeight() / Hauteur), (GetClientSize().GetWidth()-(Largeur+1.)*LargeurCube())/10.); }
 	void EffacerPuit();
 	void NouveauBloc();
-	void DrawCube(wxPaintDC &dc, int x, int y, int idpiece,bool plein);
+	void DrawCube(wxPaintDC &dc, int x, int y, int idpiece,bool plein,bool mini);
 	void DrawGrille(wxPaintDC &dc, int x, int y);
 	void PrevisualisationCube(wxPaintDC &dc,int hautPuit);
 	void TombeCube();
@@ -35,6 +36,7 @@ private:
 	void PlacerPiece();
 	void EffacerLignesPleines();
 	void GainScore(int nblignes);
+	pieces* getMatrice() { return matrice; }
 
 	wxTimer *timer;
 	wxBitmap fond;
