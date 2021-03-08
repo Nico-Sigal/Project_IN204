@@ -1,6 +1,7 @@
 #pragma once
 #include "Bloc.h"
 #include "wx/wx.h"
+#include "wx/dcbuffer.h"
 #include <algorithm>
 
 
@@ -9,7 +10,6 @@ class Puit : public wxPanel
 public:
 	Puit(wxFrame *parent);
 	void Start();
-	void Pause();
 	enum { Largeur = 10, Hauteur = 22 };
 
 	

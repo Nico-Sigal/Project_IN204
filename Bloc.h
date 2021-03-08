@@ -1,6 +1,6 @@
 #pragma once
 
-enum pieces {PasDeForme,FormeI,FormeO,FormeT,FormeL,FormeJ,FormeZ,FormeS};
+enum pieces {PasDeForme=0,FormeI=1,FormeO=2,FormeT=3,FormeL=4,FormeJ=5,FormeZ=6,FormeS=7};
 
 class Bloc
 {
