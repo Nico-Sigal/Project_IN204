@@ -1,7 +1,7 @@
 # Multiplayer Tetris
 
 This project allows you to play tetris with other players onlines through direct IP connection.
-
+This code is built using the wxWidgets library.
 
 # Classes
 How the classes are defined in this project
